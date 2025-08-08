@@ -1,0 +1,123 @@
+.imagen-globesoft {
+    float: left;
+    margin-right: 15px;
+    width: 200px;
+}
+
+.custom-btn {
+  
+  background-color: #181141;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 35px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+}
+
+.custom-btn:hover {
+    background-color: #4846a7;
+    color: aliceblue;
+}
+
+.input-morado {
+    border: 3.5px solid #181141;
+    border-radius: 8px;
+}
+
+.container-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.card-login {
+    background-color: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.text-left {
+    text-decoration: underline;
+}
+
+.text-left:hover {
+    color: #988ecf;
+}
+
+.submit {
+    background-color: #181141;
+    color: aliceblue;
+}
+
+.form-control {
+    border: 3.5px, solid, #181141;
+}
+
+.menu-btn {
+  background-color: #181141; /* morado oscuro */
+  color: rgb(238, 244, 255);
+  border-radius: 10px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.menu-btn:hover {
+  background-color: #4846a7;
+  color: rgb(255, 255, 255);
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+}
+
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+}
+h2 {
+  color: #4c2c92;
+}
+
+.añadir-btn {
+  font-weight: bold;
+  padding: 5px 15px;
+}
+
+.stock-bajo {
+  background-color: #f8d7da !important;
+  color: #721c24;
+  font-weight: bold;
+  padding: 0.5rem 1rem; /* Aumenta el espacio horizontal */
+}
+
+.stock-alto {
+  background-color: #fff3cd !important;
+  color: #856404;
+  font-weight: bold;
+}
+
+.stock-normal {
+  background-color: #d4edda !important;
+  color: #155724;
+  font-weight: bold;
+}
+
+#carrito-flotante {
+  z-index: 999;
+}
+
+#resumen-carrito {
+  max-height: 300px;
+  overflow-y: auto;
+}
