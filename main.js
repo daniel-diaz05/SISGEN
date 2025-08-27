@@ -8,12 +8,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- Funcionalidad para inventario.html ---
-    const inventarioPage = document.getElementById('tabla-inventario');
-    if (inventarioPage) {
+  // --- Funcionalidad para inventario.html ---
+  // aceptar ambos ids por compatibilidad con diferentes templates
+  const inventarioPage = document.getElementById('tablaInventario') || document.getElementById('tabla-inventario');
+  if (inventarioPage) {
         // Alerta control de stock
-        const aplicarAlertaStock = () => {
-            document.querySelectorAll("#tabla-inventario tbody tr").forEach((fila) => {
+    const aplicarAlertaStock = () => {
+      document.querySelectorAll("#tablaInventario tbody tr").forEach((fila) => {
                 const stockTd = fila.children[3];
                 if (stockTd) {
                     const stock = parseInt(stockTd.textContent);
@@ -32,40 +33,10 @@ document.addEventListener('DOMContentLoaded', function () {
         };
         aplicarAlertaStock();
 
-        // Filtro de búsqueda
-        const buscador = document.getElementById('buscador');
-        if (buscador) {
-            buscador.addEventListener('keyup', function () {
-                const filtro = this.value.toLowerCase();
-                const filas = document.querySelectorAll("#tabla-inventario tbody tr");
-                filas.forEach(fila => {
-                    const textoFila = fila.textContent.toLowerCase();
-                    fila.style.display = textoFila.includes(filtro) ? '' : 'none';
-                });
-            });
-        }
-
-        // Filtro por categoría
-        const filtroCategoria = document.getElementById('categoriaFiltro');
-        if (filtroCategoria) {
-            const filas = document.querySelectorAll('#tabla-inventario tbody tr');
-            filtroCategoria.addEventListener('change', () => {
-                const categoria = filtroCategoria.value;
-                filas.forEach(fila => {
-                    const categoriaFila = fila.children[2].textContent;
-                    if (categoria === 'todos' || categoriaFila === categoria) {
-                        fila.style.display = '';
-                    } else {
-                        fila.style.display = 'none';
-                    }
-                });
-            });
-        }
-
         // Carrito de compras
         let contador = 0;
         const items = [];
-        document.querySelectorAll('#tabla-inventario .añadir-btn').forEach(btn => {
+  document.querySelectorAll('#tablaInventario .añadir-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 btn.classList.remove('btn-primary');
                 btn.classList.add('btn-success');
@@ -99,18 +70,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Ordenamiento de columnas (con DataTables)
-        if (typeof $ !== 'undefined') {
-            try {
-                $('#tabla-inventario').DataTable({
-                    paging: false,
-                    info: false,
-                    searching: false 
-                });
-            } catch(e) {
-                console.error("DataTables error:", e);
-            }
-        }
     }
 
     // --- Funcionalidad para dashboard.html ---
@@ -305,3 +264,340 @@ window.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+// === INVENTARIO: CRUD PHP y MySQL ===
+;(function(){
+  const tabla = document.getElementById('tablaInventario');
+  const form  = document.getElementById('form-producto');
+  if(!tabla || !form) return; // Solo corre en inventario.html
+
+let dtInv = null;
+  function reinitDataTable(){
+    if (typeof $ === 'undefined' || !$('#tabla-inventario').length) return;
+    if ($.fn.DataTable.isDataTable('#tabla-inventario')) {
+      $('#tabla-inventario').DataTable().clear().destroy();
+    }
+    dtInv = $('#tabla-inventario').DataTable({
+      paging: true,
+      pageLength: 10,
+      info: false,
+      searching: true,   // lo usaremos para buscador global
+      ordering: true
+    });
+  }
+
+  const API = {
+    listar    : '../uploads/productos_listar.php',
+    crear     : '../uploads/productos_crear.php',
+    actualizar: '../uploads/productos_actualizar.php',
+    eliminar  : '../uploads/productos_eliminar.php'
+  };
+
+const moneda = v => '$' + Number(v||0).toLocaleString('es-CO');
+
+  function pintar(rows){
+    tabla.innerHTML = '';
+    rows.forEach(p=>{
+      tabla.innerHTML += `
+        <tr data-id="${p.id}">
+          <td>${p.producto}</td>
+          <td>${p.descripcion ?? ''}</td>
+          <td>${p.categoria ?? ''}</td>
+          <td>${p.stock}</td>
+          <td>${p.codigo ?? ''}</td>
+          <td>${moneda(p.precio_compra)}</td>
+          <td>${moneda(p.precio_venta)}</td>
+          <td>${p.imagen ? `<img src="../recursos/${p.imagen}" style="max-width:50px">` : ''}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1 btn-editar">Editar</button>
+            <button class="btn btn-sm btn-danger btn-eliminar">Eliminar</button>
+          </td>
+          <td><button class="btn btn-sm btn-primary añadir-btn">Añadir</button></td>
+        </tr>`;
+    });
+
+    reinitDataTable();
+
+  }
+
+  async function cargar(){
+    const r = await fetch(API.listar);
+    const txt = await r.text();
+    try{
+      const data = JSON.parse(txt);
+      if (data.error) throw new Error(data.error);
+      pintar(data);
+      await cargarUltima();
+    }catch(e){
+      console.error('API listar error:', txt);
+      alert('Error cargando inventario: '+e.message);
+    }
+let dtInv; // fuera de las funciones, una sola vez
+
+function reinitDataTable(){
+  if (typeof $ === 'undefined') return; // por si no carga jQuery/DataTables
+  // destruye si ya existe
+  if ($.fn.DataTable.isDataTable('#tabla-inventario')) {
+    $('#tabla-inventario').DataTable().clear().destroy();
+  }
+  // crea de nuevo
+  dtInv = $('#tabla-inventario').DataTable({
+    paging: true,
+    pageLength: 10,
+    info: false,
+    searching: false,
+    ordering: true
+  });
+} 
+}
+
+  // Crear o actualizar según hidden #id
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(form);
+    const id = fd.get('id');
+    const url = id ? API.actualizar : API.crear;
+    const r = await fetch(url, { method:'POST', body: fd });
+    if(r.ok){
+      form.reset();
+      form.querySelector('#id').value = '';
+      await cargar();
+      await cargarUltima();
+      alert('Guardado');
+    }else{
+      alert(await r.text());
+    }
+  });
+
+  // Editar y eliminar con delegación
+  document.addEventListener('click', async (e)=>{
+    const row = e.target.closest('tr[data-id]');
+    if(!row) return;
+    const id = row.getAttribute('data-id');
+
+    if(e.target.classList.contains('btn-editar')){
+      const c = row.children;
+      form.querySelector('#id').value            = id;
+      form.querySelector('#producto').value      = c[0].textContent.trim();
+      form.querySelector('#descripcion').value   = c[1].textContent.trim();
+      form.querySelector('#categoria').value     = c[2].textContent.trim();
+      form.querySelector('#stock').value         = c[3].textContent.trim();
+      form.querySelector('#codigo').value        = c[4].textContent.trim();
+      form.querySelector('#precio_compra').value = c[5].textContent.replace(/[^\d]/g,'');
+      form.querySelector('#precio_venta').value  = c[6].textContent.replace(/[^\d]/g,'');
+      const img = row.querySelector('img');
+      form.querySelector('#imagen').value        = img ? img.src.split('/').pop() : '';
+      window.scrollTo({ top: form.offsetTop-20, behavior:'smooth' });
+    }
+
+    if(e.target.classList.contains('btn-eliminar')){
+      if(!confirm('¿Eliminar producto?')) return;
+      const fd = new FormData(); fd.append('id', id);
+      const r = await fetch(API.eliminar, { method:'POST', body: fd });
+      if(r.ok){ await cargar(); await cargarUltima();
+        alert('Eliminado'); } else { alert(await r.text()); }
+    }
+  });
+
+const filtroCategoria = document.getElementById('categoriaFiltro');
+  if (filtroCategoria) {
+    filtroCategoria.addEventListener('change', () => {
+      if (!dtInv) return;
+      const val = filtroCategoria.value;
+      if (val === 'todos') {
+        dtInv.column(2).search('').draw();  // col 2 = Categoría (0‑based)
+      } else {
+        const esc = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        dtInv.column(2).search('^' + esc + '$', true, false).draw(); // match exacto
+      }
+    });
+  }
+
+  const buscador = document.getElementById('buscador');
+  if (buscador) {
+    buscador.addEventListener('input', () => {
+      if (!dtInv) return;
+      dtInv.search(buscador.value).draw();
+    });
+  }
+
+  cargar();
+
+async function cargarUltima(){
+  const r = await fetch('../uploads/inventario_ultima.php?ts=' + Date.now());
+  const txt = await r.text();
+  try {
+    const data = JSON.parse(txt);
+    const span = document.getElementById('ultima-actualizacion');
+    if(span && data.ultima){
+      span.textContent = new Date(data.ultima).toLocaleString('es-CO');
+    }
+  } catch (e) {
+    console.error('inventario_ultima.php no devolvió JSON:', txt);
+  }
+}
+})();
+
+// =======================
+// SOLICITUDES (HU3 multi-ítem + HU4 aprobar/rechazar)
+// =======================
+(function SolicitudesModule(){
+  // Ejecutar solo en pedidos.html
+  if (!/\/html\/pedidos\.html$/i.test(location.pathname)) return;
+
+  // Capturas (si falta algo crítico, no rompemos)
+  const tbSol   = document.getElementById('tbodySolicitudes');
+  const selProd = document.getElementById('solProducto');
+  const inpCant = document.getElementById('solCantidad');
+  const btnAdd  = document.getElementById('btnAgregarItem');
+  const btnSend = document.getElementById('btnEnviarSolicitud');
+  const inpSolic= document.getElementById('solSolicitante');
+  const inpMot  = document.getElementById('solMotivo');
+  const tbItems = document.getElementById('tbodyItemsSolicitud');
+  const tbDet   = document.getElementById('tbodySolDetalle');
+
+  const hasList = !!tbSol;
+  const hasForm = !!(selProd && inpCant && btnAdd && btnSend && inpSolic && tbItems);
+  console.log('[SISGEN] pedidos -> hasList:', hasList, 'hasForm:', hasForm);
+
+  const API = {
+    productos_listar   : '../uploads/productos_listar.php',
+    solicitudes_listar : '../uploads/solicitudes_listar.php',
+    solicitudes_crear  : '../uploads/solicitudes_crear.php',
+    solicitudes_detalle: '../uploads/solicitudes_detalle.php',
+    solicitudes_estado : '../uploads/solicitudes_cambiar_estado.php'
+  };
+
+  let items = []; // {producto_id, nombre, cantidad}
+
+  async function poblarProductos(){
+    if (!hasForm) return;
+    const r = await fetch(API.productos_listar + '?ts=' + Date.now());
+    const txt = await r.text();
+    let data; try { data = JSON.parse(txt); } catch(e){ console.error('RAW productos:', txt); return; }
+    selProd.innerHTML = '<option value="">-- Producto --</option>';
+    data.forEach(p => {
+      selProd.insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.producto} (${p.codigo ?? ''})</option>`);
+    });
+  }
+
+  async function cargarSolicitudes(){
+    if (!hasList) return;
+    const r = await fetch(API.solicitudes_listar + '?ts=' + Date.now());
+    const txt = await r.text();
+    let data; try { data = JSON.parse(txt); } catch(e){ console.error('listar RAW:', txt); return; }
+    console.log('[SISGEN] solicitudes_listar -> filas:', Array.isArray(data) ? data.length : 'n/a');
+    tbSol.innerHTML = '';
+    (data||[]).forEach(s => {
+      tbSol.insertAdjacentHTML('beforeend', `
+        <tr data-id="${s.id}">
+          <td>${s.id}</td>
+          <td>${s.solicitante}</td>
+          <td>${s.motivo ?? ''}</td>
+          <td>${s.items ?? 0}</td>
+          <td>${s.total_unidades ?? 0}</td>
+          <td class="${
+            s.estado==='aprobada' ? 'text-success fw-bold' :
+            s.estado==='rechazada' ? 'text-danger fw-bold'  : 'text-warning fw-bold'
+          }">${s.estado}</td>
+          <td>${new Date(s.fecha).toLocaleString('es-CO')}</td>
+          <td>
+            <button class="btn btn-sm btn-info btn-ver">Ver</button>
+            ${s.estado==='pendiente' ? `
+              <button class="btn btn-sm btn-success btn-aprobar">Aprobar</button>
+              <button class="btn btn-sm btn-danger btn-rechazar">Rechazar</button>
+            ` : ''}
+          </td>
+        </tr>
+      `);
+    });
+  }
+
+  function renderItems(){
+    if (!hasForm) return;
+    tbItems.innerHTML = '';
+    items.forEach((it, idx)=>{
+      tbItems.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${it.nombre}</td>
+          <td>${it.cantidad}</td>
+          <td><button class="btn btn-sm btn-outline-danger" data-del="${idx}">Quitar</button></td>
+        </tr>
+      `);
+    });
+  }
+
+  if (hasForm) {
+    btnAdd.addEventListener('click', ()=>{
+      const pid  = parseInt(selProd.value || '0', 10);
+      const ptxt = selProd.options[selProd.selectedIndex]?.text || '';
+      const cant = parseInt(inpCant.value || '0', 10);
+      if(!pid || cant<=0){ alert('Selecciona producto y cantidad'); return; }
+      const found = items.find(i=>i.producto_id===pid);
+      if(found) found.cantidad += cant;
+      else items.push({ producto_id: pid, nombre: ptxt, cantidad: cant });
+      renderItems();
+    });
+
+    tbItems.addEventListener('click', (e)=>{
+      const idx = e.target.getAttribute('data-del');
+      if(idx !== null){
+        items.splice(parseInt(idx,10),1);
+        renderItems();
+      }
+    });
+
+    btnSend.addEventListener('click', async ()=>{
+      if(!items.length){ alert('Añade al menos un producto'); return; }
+      if(!inpSolic.value.trim()){ alert('Ingresa el solicitante'); return; }
+      const fd = new FormData();
+      fd.append('solicitante', inpSolic.value.trim());
+      fd.append('motivo',      inpMot.value.trim());
+      fd.append('items_json',  JSON.stringify(items));
+      const r = await fetch(API.solicitudes_crear, { method:'POST', body: fd });
+      const resp = await r.json();
+      if(resp.ok){
+        items = []; renderItems();
+        inpSolic.value=''; inpMot.value=''; selProd.value=''; inpCant.value='1';
+        await cargarSolicitudes();
+        alert('Solicitud creada');
+      }else{
+        alert(resp.error || 'Error al crear solicitud');
+      }
+    });
+  }
+
+  // Delegación para Ver/Aprobar/Rechazar (solo si hay tabla)
+  if (hasList) {
+    document.addEventListener('click', async (e)=>{
+      const row = e.target.closest('tr[data-id]'); if(!row) return;
+      const id = row.getAttribute('data-id');
+
+      if (e.target.classList.contains('btn-ver')) {
+        const url = API.solicitudes_detalle + '?id=' + id + '&ts=' + Date.now();
+        const r   = await fetch(url);
+        const txt = await r.text();
+        let data; try { data = JSON.parse(txt); }
+        catch { console.error('Detalle no-JSON:', txt); alert('Respuesta inválida del servidor.'); return; }
+        if (data && data.ok === false) { alert('No se pudo cargar el detalle: ' + (data.error || 'Error')); return; }
+        if (!Array.isArray(data)) { alert('No hay detalle para esta solicitud.'); return; }
+        const tbDet = document.getElementById('tbodySolDetalle');
+        if (!tbDet) return;
+        tbDet.innerHTML = '';
+        data.forEach(d => tbDet.insertAdjacentHTML('beforeend', `<tr><td>${d.producto}</td><td>${d.cantidad}</td></tr>`));
+        if (typeof bootstrap !== 'undefined') new bootstrap.Modal(document.getElementById('modalSolDetalle')).show();
+      }
+
+      if (e.target.classList.contains('btn-aprobar') || e.target.classList.contains('btn-rechazar')) {
+        const accion = e.target.classList.contains('btn-aprobar') ? 'aprobar' : 'rechazar';
+        const fd = new FormData(); fd.append('id', id); fd.append('accion', accion);
+        const r = await fetch(API.solicitudes_estado, { method:'POST', body: fd });
+        const resp = await r.json();
+        if(resp.ok){ await cargarSolicitudes(); alert(`Solicitud ${accion}da`); }
+        else { alert(resp.error || 'No se pudo cambiar el estado'); }
+      }
+    });
+  }
+
+  // Arranque local (sin exportar nada al global)
+  (async ()=>{ await poblarProductos(); await cargarSolicitudes(); })();
+})();
