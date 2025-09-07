@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (tablaUsuarios && modalHistorial) {
       tablaUsuarios.querySelectorAll('button[data-bs-toggle="modal"][data-bs-target="#historialModal"]').forEach(btn => {
         btn.addEventListener('click', function(e) {
-          // Mostrar el modal manualmente por si falla el data-bs-toggle
+          // Mostrar modal manualmente por si falla data-bs-toggle
           if (typeof bootstrap !== 'undefined') {
             const modal = new bootstrap.Modal(modalHistorial);
             modal.show();
@@ -280,7 +280,7 @@ let dtInv = null;
       paging: true,
       pageLength: 10,
       info: false,
-      searching: true,   // lo usaremos para buscador global
+      searching: true,   // buscador global
       ordering: true
     });
   }
@@ -444,7 +444,7 @@ async function cargarUltima(){
   // Ejecutar solo en pedidos.html
   if (!/\/html\/pedidos\.html$/i.test(location.pathname)) return;
 
-  // Capturas (si falta algo crítico, no rompemos)
+  // Capturas ()
   const tbSol   = document.getElementById('tbodySolicitudes');
   const selProd = document.getElementById('solProducto');
   const inpCant = document.getElementById('solCantidad');

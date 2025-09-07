@@ -75,16 +75,56 @@ body {
   font-family: Arial, sans-serif;
   background-color: #f8f9fa;
 }
-
+/* side bar */
 .sidebar {
+  background-color: #181141;
+  color: white;
   width: 220px;
+  min-width: 200px;
   min-height: 100vh;
 }
 
+/* quita fondos en la lista */
+.sidebar ul.nav {
+  background: transparent !important;
+  padding-left: 0;
+  margin: 0;
+  list-style: none;
+}
+
+/* quitar bloques blancos */
+.sidebar .nav-item {
+  background: transparent !important;
+  border: none;
+}
+
+/* Links del menú */
+.sidebar .nav-link {
+  color: #ffffff !important; 
+  background-color: #0d6efd;     
+  margin-bottom: 5px;              
+  border-radius: 4px;
+  padding: 8px 12px;
+  display: block;
+  text-align: left;
+}
+
+/* Hover */
+.sidebar .nav-link:hover {
+  background-color: #0b5ed7 !important; 
+  color: #ffffff !important;
+}
+
+/* Activo */
+.sidebar .nav-link.active {
+  background-color: #084298 !important;
+  font-weight: bold;
+}
 .nav-link:hover {
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 5px;
 }
+
 h2 {
   color: #4c2c92;
 }
@@ -120,4 +160,77 @@ h2 {
 #resumen-carrito {
   max-height: 300px;
   overflow-y: auto;
+}
+
+
+/* Movil responsive */
+/* --- Reset y base --- */
+*{box-sizing:border-box}
+html{font-size:16px}
+body{margin:0;font-family:system-ui,Arial,sans-serif;color:#111;background:#fff}
+img,video{max-width:100%;height:auto;display:block}
+
+/* --- Contenedor y espaciado fluido --- */
+.container{max-width:100%;padding:clamp(12px,3vw,24px)}
+.section{margin:clamp(12px,3vw,24px) auto}
+
+/* --- Grids y cards básicos --- */
+.grid{display:grid;gap:clamp(8px,2.5vw,16px)}
+.cards{display:grid;gap:clamp(10px,3vw,18px);grid-template-columns:1fr}
+@media(min-width:640px){.cards{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.cards{grid-template-columns:repeat(4,1fr)}}
+
+.card{border:1px solid #e5e7eb;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);background:#fff}
+
+/* --- Botones y campos táctiles (44–48 px) --- */
+button,.btn,input[type="submit"],.btn-sm{
+  min-height:44px;padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;
+  background:#0ea5e9;color:#fff;cursor:pointer
+}
+.btn-secondary{background:#f3f4f6;color:#111;border-color:#e5e7eb}
+input,select,textarea{width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:10px}
+
+/* --- Tablas con scroll horizontal  móvil --- */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:640px} /* min-width evita que se aplaste */
+th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
+
+/* anti desbordes laterales */
+img,table,pre,code{max-width:100%}
+.row,[class*="col-"]{max-width:100%}
+body{overflow-x:hidden}
+
+/* --- Barra superior responsiv--- */
+.nav{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #eee;background:#fff}
+.nav .brand{font-weight:700}
+.nav .spacer{flex:1}
+.nav .links{display:none;gap:10px}
+.nav-toggle{appearance:none;width:36px;height:36px;border:1px solid #e5e7eb;border-radius:8px;display:grid;place-items:center}
+.nav-toggle span{width:18px;height:2px;background:#111;position:relative;display:block}
+.nav-toggle span::before,.nav-toggle span::after{content:"";position:absolute;width:18px;height:2px;background:#111;left:0}
+.nav-toggle span::before{top:-6px}.nav-toggle span::after{top:6px}
+.nav.open .links{display:flex;flex-direction:column;position:fixed;inset:56px 0 auto 0;background:#fff;padding:12px;border-top:1px solid #eee}
+@media(min-width:768px){
+  .nav-toggle{display:none}
+  .nav .links{display:flex;flex-direction:row}
+}
+
+/* --- pantallas pequeñas --- */
+@media(max-width:480px){
+  .hide-on-mobile{display:none!important}
+  .actions-col .btn{width:100%;margin-bottom:8px}
+  th,td{padding:8px}
+}
+
+/* --- Avoid salto horizontal con datatables --- */
+.dataTables_wrapper .dataTables_scrollHead{overflow:hidden}
+.dataTables_wrapper .dataTables_scrollBody{overflow:auto}
+
+
+/* nav var */
+.navbar {
+  position: fixed;   /* estatica */
+  top: 0;
+  z-index: 1050;      /* encima */
+  width: 100%;
 }
