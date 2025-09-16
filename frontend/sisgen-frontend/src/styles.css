@@ -1,0 +1,37 @@
+.imagen-globesoft {
+  float: left;
+  margin-right: 15px;
+  width: 200px;
+}
+
+.custom-btn {
+  background-color: #181141;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 35px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+}
+
+.custom-btn:hover {
+  background-color: #4846a7;
+  color: aliceblue;
+}
+
+.input-morado {
+  border: 3.5px solid #181141;
+  border-radius: 8px;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+}
+
+.logo-globesoft {
+  width: 350px;
+  height: auto;
+}
