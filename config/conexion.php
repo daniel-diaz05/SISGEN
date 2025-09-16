@@ -2,7 +2,7 @@
 $host='localhost'; 
 $user='root'; 
 $pass=''; 
-$db='sisgen'; // nombre exacto de tu BD
+$db='sisgen';
 
 $conn = new mysqli($host, $user, $pass, $db);
 

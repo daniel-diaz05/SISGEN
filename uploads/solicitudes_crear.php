@@ -1,37 +1,40 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
-require __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../config/conexion.php';
+error_reporting(E_ERROR | E_PARSE);
+
+$data = json_decode(file_get_contents("php://input"), true);
+
+if (!$data || !isset($data['items']) || !is_array($data['items'])) {
+    http_response_code(400);
+    echo json_encode(["ok"=>false,"msg"=>"Datos inválidos"]);
+    exit;
+}
+
+// Aquí usamos solicitante en lugar de usuario_id
+$solicitante = "cliente1"; // o sacalo de sesión si lo tienes
 
 try {
-  if (empty($_POST['solicitante'])) throw new Exception('Falta solicitante', 400);
-  $solicitante = trim($_POST['solicitante']);
-  $motivo = $_POST['motivo'] ?? null;
+    $stmt = $conn->prepare("INSERT INTO solicitudes (solicitante, estado) VALUES (?, 'pendiente')");
+    $stmt->bind_param("s", $solicitante);
+    if (!$stmt->execute()) {
+        throw new Exception("Error al crear solicitud");
+    }
+    $solicitud_id = $stmt->insert_id;
 
-  if (empty($_POST['items_json'])) throw new Exception('Faltan items', 400);
-  $items = json_decode($_POST['items_json'], true);
-  if (!is_array($items) || !count($items)) throw new Exception('Items inválidos', 400);
+    $stmt2 = $conn->prepare("INSERT INTO solicitud_items (solicitud_id, producto_id, cantidad) VALUES (?,?,?)");
+    foreach ($data['items'] as $item) {
+        $producto_id = (int)($item['producto_id'] ?? 0);
+        $cantidad    = (int)($item['cantidad'] ?? 0);
+        if ($producto_id > 0 && $cantidad > 0) {
+            $stmt2->bind_param("iii", $solicitud_id, $producto_id, $cantidad);
+            $stmt2->execute();
+        }
+    }
 
-  $conn->begin_transaction();
+    echo json_encode(["ok"=>true,"msg"=>"Solicitud creada con éxito","id"=>$solicitud_id]);
 
-  $st = $conn->prepare("INSERT INTO solicitudes (solicitante, motivo) VALUES (?,?)");
-  $st->bind_param("ss", $solicitante, $motivo);
-  $st->execute();
-  $solicitud_id = $conn->insert_id;
-
-  $sti = $conn->prepare("INSERT INTO solicitud_items (solicitud_id, producto_id, cantidad) VALUES (?,?,?)");
-  foreach ($items as $it) {
-    $pid = (int)($it['producto_id'] ?? 0);
-    $cant = (int)($it['cantidad'] ?? 0);
-    if ($pid <= 0 || $cant <= 0) throw new Exception('Item inválido', 400);
-    $sti->bind_param("iii", $solicitud_id, $pid, $cant);
-    $sti->execute();
-  }
-
-  $conn->commit();
-  echo json_encode(['ok'=>true]);
-
-} catch(Throwable $e){
-  if ($conn) $conn->rollback();
-  http_response_code(($e->getCode()>=400 && $e->getCode()<600)?$e->getCode():500);
-  echo json_encode(['ok'=>false,'error'=>$e->getMessage()]);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(["ok"=>false,"msg"=>$e->getMessage()]);
 }

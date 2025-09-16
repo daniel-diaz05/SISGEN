@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
-require __DIR__ . '/../conexion.php';
+require __DIR__ . "/../config/conexion.php";
 $conn->set_charset('utf8mb4');
 
 $ts = null;

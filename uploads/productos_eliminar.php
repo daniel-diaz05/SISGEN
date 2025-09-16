@@ -1,5 +1,5 @@
 <?php
-require '../conexion.php';
+require '../config/conexion.php';
 if(empty($_POST['id'])){ http_response_code(400); echo "Falta id"; exit; }
 $id=(int)$_POST['id'];
 

@@ -77,53 +77,38 @@ body {
 }
 /* side bar */
 .sidebar {
-  background-color: #181141;
-  color: white;
-  width: 220px;
-  min-width: 200px;
-  min-height: 100vh;
+  width: 200px;
+  height: 100%;          
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #4B0082;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  padding-top: 60px;         /* nav bar de arriba */
+  z-index: 1000;
 }
 
-/* quita fondos en la lista */
-.sidebar ul.nav {
-  background: transparent !important;
-  padding-left: 0;
-  margin: 0;
-  list-style: none;
-}
-
-/* quitar bloques blancos */
-.sidebar .nav-item {
-  background: transparent !important;
+.sidebar .list-group-item {
   border: none;
+  background: transparent;
+  color: #f8f9fa;
+  border-radius: 6px;
+  margin: 4px 8px;
+  padding: 10px 14px;
+  transition: background 0.2s ease;
 }
 
-/* Links del menú */
-.sidebar .nav-link {
-  color: #ffffff !important; 
-  background-color: #0d6efd;     
-  margin-bottom: 5px;              
-  border-radius: 4px;
-  padding: 8px 12px;
-  display: block;
-  text-align: left;
+.sidebar .list-group-item:hover {
+  background-color: #5E2B97;
+  color: #fff;
 }
 
-/* Hover */
-.sidebar .nav-link:hover {
-  background-color: #0b5ed7 !important; 
-  color: #ffffff !important;
+.sidebar .list-group-item i {
+  color: #d1c4e9;
 }
-
-/* Activo */
-.sidebar .nav-link.active {
-  background-color: #084298 !important;
-  font-weight: bold;
-}
-.nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 5px;
-}
+/* fin sidebar */
 
 h2 {
   color: #4c2c92;
@@ -164,6 +149,17 @@ h2 {
 
 
 /* Movil responsive */
+
+body {
+  margin-left: 200px; /*  espacio para sidebar */
+  background-color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+  body {
+    margin-left: 0; /* quita toggle a sidebar en movil */
+  }
+}
 /* --- Reset y base --- */
 *{box-sizing:border-box}
 html{font-size:16px}
@@ -233,4 +229,17 @@ body{overflow-x:hidden}
   top: 0;
   z-index: 1050;      /* encima */
   width: 100%;
+}
+
+/* Pedidos Pendientes  sidebar issue */
+h4.mt-5.mb-3.text-center,
+h4.mt-5.mb-3.text-center + .table-responsive {
+  margin-left: 200px;
+}
+
+@media (max-width: 768px) {
+  h4.mt-5.mb-3.text-center,
+  h4.mt-5.mb-3.text-center + .table-responsive {
+    margin-left: 0;
+  }
 }

@@ -33,45 +33,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
         aplicarAlertaStock();
 
-        // Carrito de compras
-        let contador = 0;
-        const items = [];
-  document.querySelectorAll('#tablaInventario .añadir-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-success');
-                btn.textContent = 'Añadido';
-                btn.disabled = true;
-
-                const fila = btn.closest('tr');
-                const producto = fila.children[0].textContent;
-                items.push(producto);
-                contador++;
-                
-                const contadorCarrito = document.getElementById("contador-carrito");
-                if(contadorCarrito) contadorCarrito.textContent = contador;
-
-                const itemsCarrito = document.getElementById("items-carrito");
-                if(itemsCarrito){
-                    const li = document.createElement("li");
-                    li.className = "list-group-item";
-                    li.textContent = producto;
-                    itemsCarrito.appendChild(li);
-                }
-            });
-        });
-
-        // Mostrar/ocultar resumen del carrito
-        const verCarritoBtn = document.getElementById("ver-carrito");
-        if (verCarritoBtn) {
-            verCarritoBtn.addEventListener("click", () => {
-                const resumenCarrito = document.getElementById("resumen-carrito");
-                if(resumenCarrito) resumenCarrito.classList.toggle("d-none");
-            });
-        }
-
-    }
-
     // --- Funcionalidad para dashboard.html ---
     const graficoProductos = document.getElementById('graficoProductos');
     if (graficoProductos) {
@@ -242,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       });
     });
-});
+  }});
 
 // Esperar a que el DOM esté listo
 window.addEventListener('DOMContentLoaded', function() {
@@ -268,9 +229,10 @@ window.addEventListener('DOMContentLoaded', function() {
 ;(function(){
   const tabla = document.getElementById('tablaInventario');
   const form  = document.getElementById('form-producto');
-  if(!tabla || !form) return; // Solo corre en inventario.html
+  if (!tabla || !form) return; // Solo corre en inventario.html
 
-let dtInv = null;
+  let dtInv = null;
+
   function reinitDataTable(){
     if (typeof $ === 'undefined' || !$('#tabla-inventario').length) return;
     if ($.fn.DataTable.isDataTable('#tabla-inventario')) {
@@ -280,19 +242,19 @@ let dtInv = null;
       paging: true,
       pageLength: 10,
       info: false,
-      searching: true,   // buscador global
+      searching: true,
       ordering: true
     });
   }
 
   const API = {
-    listar    : '../uploads/productos_listar.php',
-    crear     : '../uploads/productos_crear.php',
-    actualizar: '../uploads/productos_actualizar.php',
-    eliminar  : '../uploads/productos_eliminar.php'
+    listar    : '../../uploads/productos_listar.php',
+    crear     : '../../uploads/productos_crear.php',
+    actualizar: '../../uploads/productos_actualizar.php',
+    eliminar  : '../../uploads/productos_eliminar.php'
   };
 
-const moneda = v => '$' + Number(v||0).toLocaleString('es-CO');
+  const moneda = v => '$' + Number(v||0).toLocaleString('es-CO');
 
   function pintar(rows){
     tabla.innerHTML = '';
@@ -306,69 +268,56 @@ const moneda = v => '$' + Number(v||0).toLocaleString('es-CO');
           <td>${p.codigo ?? ''}</td>
           <td>${moneda(p.precio_compra)}</td>
           <td>${moneda(p.precio_venta)}</td>
-          <td>${p.imagen ? `<img src="../recursos/${p.imagen}" style="max-width:50px">` : ''}</td>
+          <td>${p.imagen ? `<img src="../../public/Recursos/${p.imagen}" style="max-width:50px">` : ''}</td>
           <td>
             <button class="btn btn-sm btn-warning me-1 btn-editar">Editar</button>
             <button class="btn btn-sm btn-danger btn-eliminar">Eliminar</button>
           </td>
-          <td><button class="btn btn-sm btn-primary añadir-btn">Añadir</button></td>
+          <td>
+            <input type="number" id="cant-${p.id}" value="1" min="1" style="width:60px;">
+            <button class="btn btn-success btn-sm" 
+              onclick="agregarAlCarrito(${p.id}, decodeURIComponent('${encodeURIComponent(p.producto)}'))">
+              Añadir
+            </button>
+          </td>
         </tr>`;
     });
-
     reinitDataTable();
-
   }
 
   async function cargar(){
     const r = await fetch(API.listar);
     const txt = await r.text();
-    try{
+    try {
       const data = JSON.parse(txt);
       if (data.error) throw new Error(data.error);
       pintar(data);
       await cargarUltima();
-    }catch(e){
+    } catch(e) {
       console.error('API listar error:', txt);
       alert('Error cargando inventario: '+e.message);
     }
-let dtInv; // fuera de las funciones, una sola vez
-
-function reinitDataTable(){
-  if (typeof $ === 'undefined') return; // por si no carga jQuery/DataTables
-  // destruye si ya existe
-  if ($.fn.DataTable.isDataTable('#tabla-inventario')) {
-    $('#tabla-inventario').DataTable().clear().destroy();
   }
-  // crea de nuevo
-  dtInv = $('#tabla-inventario').DataTable({
-    paging: true,
-    pageLength: 10,
-    info: false,
-    searching: false,
-    ordering: true
-  });
-} 
-}
 
-  // Crear o actualizar según hidden #id
+  // Escucha del formulario (ahora sí dentro del mismo bloque)
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const fd = new FormData(form);
     const id = fd.get('id');
     const url = id ? API.actualizar : API.crear;
     const r = await fetch(url, { method:'POST', body: fd });
-    if(r.ok){
+    if (r.ok){
       form.reset();
       form.querySelector('#id').value = '';
       await cargar();
       await cargarUltima();
       alert('Guardado');
-    }else{
+    } else {
       alert(await r.text());
     }
   });
 
-  // Editar y eliminar con delegación
+  // Delegación para editar y eliminar
   document.addEventListener('click', async (e)=>{
     const row = e.target.closest('tr[data-id]');
     if(!row) return;
@@ -393,21 +342,21 @@ function reinitDataTable(){
       if(!confirm('¿Eliminar producto?')) return;
       const fd = new FormData(); fd.append('id', id);
       const r = await fetch(API.eliminar, { method:'POST', body: fd });
-      if(r.ok){ await cargar(); await cargarUltima();
-        alert('Eliminado'); } else { alert(await r.text()); }
+      if(r.ok){ await cargar(); await cargarUltima(); alert('Eliminado'); }
+      else { alert(await r.text()); }
     }
   });
 
-const filtroCategoria = document.getElementById('categoriaFiltro');
+  const filtroCategoria = document.getElementById('categoriaFiltro');
   if (filtroCategoria) {
     filtroCategoria.addEventListener('change', () => {
       if (!dtInv) return;
       const val = filtroCategoria.value;
       if (val === 'todos') {
-        dtInv.column(2).search('').draw();  // col 2 = Categoría (0‑based)
+        dtInv.column(2).search('').draw();
       } else {
         const esc = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        dtInv.column(2).search('^' + esc + '$', true, false).draw(); // match exacto
+        dtInv.column(2).search('^' + esc + '$', true, false).draw();
       }
     });
   }
@@ -422,19 +371,19 @@ const filtroCategoria = document.getElementById('categoriaFiltro');
 
   cargar();
 
-async function cargarUltima(){
-  const r = await fetch('../uploads/inventario_ultima.php?ts=' + Date.now());
-  const txt = await r.text();
-  try {
-    const data = JSON.parse(txt);
-    const span = document.getElementById('ultima-actualizacion');
-    if(span && data.ultima){
-      span.textContent = new Date(data.ultima).toLocaleString('es-CO');
+  async function cargarUltima(){
+    const r = await fetch('../../uploads/inventario_ultima.php?ts=' + Date.now());
+    const txt = await r.text();
+    try {
+      const data = JSON.parse(txt);
+      const span = document.getElementById('ultima-actualizacion');
+      if(span && data.ultima){
+        span.textContent = new Date(data.ultima).toLocaleString('es-CO');
+      }
+    } catch (e) {
+      console.error('inventario_ultima.php no devolvió JSON:', txt);
     }
-  } catch (e) {
-    console.error('inventario_ultima.php no devolvió JSON:', txt);
   }
-}
 })();
 
 // =======================
@@ -460,11 +409,11 @@ async function cargarUltima(){
   console.log('[SISGEN] pedidos -> hasList:', hasList, 'hasForm:', hasForm);
 
   const API = {
-    productos_listar   : '../uploads/productos_listar.php',
-    solicitudes_listar : '../uploads/solicitudes_listar.php',
-    solicitudes_crear  : '../uploads/solicitudes_crear.php',
-    solicitudes_detalle: '../uploads/solicitudes_detalle.php',
-    solicitudes_estado : '../uploads/solicitudes_cambiar_estado.php'
+    productos_listar   : '../../uploads/productos_listar.php',
+    solicitudes_listar : '../../uploads/solicitudes_listar.php',
+    solicitudes_crear  : '../../uploads/solicitudes_crear.php',
+    solicitudes_detalle: '../../uploads/solicitudes_detalle.php',
+    solicitudes_estado : '../../uploads/solicitudes_cambiar_estado.php'
   };
 
   let items = []; // {producto_id, nombre, cantidad}
@@ -601,3 +550,139 @@ async function cargarUltima(){
   // Arranque local (sin exportar nada al global)
   (async ()=>{ await poblarProductos(); await cargarSolicitudes(); })();
 })();
+
+// ================== CARRITO ==================
+let carrito = [];
+
+// Agregar producto al carrito
+function agregarAlCarrito(id, nombre) {
+  id = parseInt(id, 10);
+  let input = document.getElementById("cant-" + id);
+  let cantidad = parseInt(input.value, 10) || 1;
+
+  let item = carrito.find(i => i.producto_id === id);
+  if (item) {
+    item.cantidad += cantidad;
+  } else {
+    carrito.push({ producto_id: id, nombre: nombre, cantidad: cantidad });
+  }
+
+  renderCarrito();
+  input.value = 1; // reset a 1
+}
+
+// Mostrar carrito
+function renderCarrito() {
+  let tbody = document.getElementById("carrito-body");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  carrito.forEach((item, idx) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${item.nombre}</td>
+        <td>${item.cantidad}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="eliminarDelCarrito(${idx})">Quitar</button></td>
+      </tr>`;
+  });
+}
+
+// Quitar del carrito
+function eliminarDelCarrito(idx) {
+  carrito.splice(idx, 1);
+  renderCarrito();
+}
+
+// Confirmar compra
+async function confirmarCompra() {
+  if (carrito.length === 0) {
+    alert("El carrito está vacío");
+    return;
+  }
+
+  let data = { items: carrito };
+
+  let res = await fetch("../../uploads/solicitudes_crear.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+  let json = await res.json();
+  alert(json.msg || "Solicitud creada");
+
+  carrito = [];
+  renderCarrito();
+  if (typeof cargarInventario === "function") {
+    cargarInventario(); // refrescar inventario si ya tienes esta función
+  }
+}
+
+// Delegar eventos
+document.addEventListener("DOMContentLoaded", function() {
+  let btnConfirmar = document.getElementById("btn-confirmar-compra");
+  if (btnConfirmar) {
+    btnConfirmar.addEventListener("click", confirmarCompra);
+  }
+});
+
+// COMPRAS.HTML
+async function cargarCompras() {
+  console.log(" Ejecutando cargarCompras()");
+  try {
+    let res = await fetch("../../uploads/solicitudes_listar.php");
+    console.log(" URL usada:", res.url);
+    console.log(" Status:", res.status);
+
+    let solicitudes = await res.json();
+    console.log(" Datos recibidos:", solicitudes);
+
+    let tbody = document.getElementById("tablaCompras");
+    if (!tbody) {
+      console.warn(" No encontré el tbody con id=tablaCompras");
+      return;
+    }
+
+    tbody.innerHTML = "";
+    solicitudes.forEach(s => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${s.id}</td>
+          <td>${s.solicitante || "N/A"}</td>
+          <td>${s.motivo || ""}</td>
+          <td>${s.fecha}</td>
+          <td>${s.items} productos / ${s.total_unidades} unidades</td>
+          <td>${s.estado}</td>
+          <td>
+            <button class="btn btn-info btn-sm" onclick="verDetalle(${s.id})">Ver detalle</button>
+          </td>
+        </tr>`;
+    });
+  } catch (err) {
+    console.error(" Error cargando compras:", err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.getElementById("tablaCompras")) {
+    cargarCompras();
+  }
+});
+
+async function verDetalle(id) {
+  let res = await fetch("../../uploads/solicitudes_detalle.php?id=" + id);
+  let items = await res.json();
+
+  let tbody = document.getElementById("detalleSolicitud");
+  tbody.innerHTML = "";
+
+  items.forEach(it => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${it.producto}</td>
+        <td>${it.cantidad}</td>
+      </tr>`;
+  });
+
+  let modal = new bootstrap.Modal(document.getElementById("detalleModal"));
+  modal.show();
+}

@@ -1,5 +1,5 @@
 <?php
-require '../conexion.php';
+require '../config/conexion.php';
 $req=['producto','stock','codigo'];
 foreach($req as $k){ if(empty($_POST[$k])){ http_response_code(400); echo "Falta $k"; exit; } }
 
