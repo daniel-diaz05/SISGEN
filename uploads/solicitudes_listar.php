@@ -1,4 +1,10 @@
 <?php
+/**
+ * Endpoint: /uploads/solicitudes_listar.php
+ * Método: GET
+ * Descripción: Lista todas las solicitudes de productos.
+ * Respuesta: JSON: { id, usuario, estado, ... }
+ */
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/../config/conexion.php';
 if (method_exists($conn, 'set_charset')) { $conn->set_charset('utf8mb4'); }

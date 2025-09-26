@@ -1,4 +1,11 @@
 <?php
+/**
+ * Endpoint: /uploads/movimientos_crear.php
+ * Método: POST
+ * Descripción: Registra un movimiento de entrada o salida de stock.
+ * Entrada: form-data (producto_id, tipo, cantidad, nota)
+ * Respuesta: JSON: éxito o error.
+ */
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . "/../config/conexion.php";
 

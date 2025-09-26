@@ -1,4 +1,10 @@
 <?php
+/**
+ * Endpoint: /uploads/inventario_ultima.php
+ * Método: GET
+ * Descripción: Muestra el último registro del inventario consolidado
+ * Respuesta: JSON: datos del inventario más reciente
+ */
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . "/../config/conexion.php";
 $conn->set_charset('utf8mb4');

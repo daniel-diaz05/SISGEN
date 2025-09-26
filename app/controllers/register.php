@@ -1,4 +1,10 @@
 <?php
+/**
+ * Endpoint: /app/controllers/register.php
+ * Método: POST
+ * Descripción: Registra un nuevo usuario en el sistema.
+ * Respuesta: JSON, da éxito o error.
+ */
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");

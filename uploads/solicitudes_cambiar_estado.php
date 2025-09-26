@@ -1,4 +1,11 @@
 <?php
+/**
+ * Endpoint: /uploads/solicitudes_cambiar_estado.php
+ * Método: POST
+ * Descripción: Cambia el estado de una solicitud (aprobar o rechazar)
+ * Entrada: JSON { id, accion:"aprobar"o"rechazar" }
+ * Respuesta: JSON: éxito o error.
+ */
 require_once __DIR__ . '/../config/conexion.php';
 
 $data = json_decode(file_get_contents("php://input"), true);

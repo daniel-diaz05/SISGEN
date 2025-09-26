@@ -1,4 +1,11 @@
 <?php
+/**
+ * Endpoint: /uploads/solicitudes_detalle.php
+ * Método: GET
+ * Descripción: Obtiene el detalle de una solicitud específica
+ * Entrada: query param ?id={id}
+ * Respuesta: JSON: detalle de la solicitud.
+ */
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/../config/conexion.php';
 

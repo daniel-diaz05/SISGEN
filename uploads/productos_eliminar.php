@@ -1,4 +1,11 @@
 <?php
+/**
+ * Endpoint: /uploads/productos_eliminar.php
+ * Método: POST
+ * Descripción: Elimina un producto por su ID.
+ * Entrada: form-data (id)
+ * Respuesta: JSON: éxito o error.
+ */
 require '../config/conexion.php';
 if(empty($_POST['id'])){ http_response_code(400); echo "Falta id"; exit; }
 $id=(int)$_POST['id'];

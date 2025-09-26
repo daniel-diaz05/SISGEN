@@ -1,4 +1,11 @@
 <?php
+/**
+ * Endpoint: /uploads/productos_actualizar.php
+ * Método: POST
+ * Descripción: Actualiza los datos de un producto existente.
+ * Entrada: form-data (id y campos a actualizar)
+ * Respuesta: JSON: éxito o error.
+ */
 require '../config/conexion.php';
 if(empty($_POST['id'])){ http_response_code(400); echo "Falta id"; exit; }
 $id=(int)$_POST['id'];

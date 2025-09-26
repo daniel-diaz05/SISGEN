@@ -1,4 +1,11 @@
 <?php
+/**
+ * Endpoint: /uploads/solicitudes_crear.php
+ * Método: POST
+ * Descripción: Crea una nueva solicitud con productos asociados.
+ * Entrada: JSON items:[{producto_id, cantidad},...]
+ * Respuesta: JSON: éxito o error.
+ */
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config/conexion.php';
 error_reporting(E_ERROR | E_PARSE);
@@ -11,8 +18,8 @@ if (!$data || !isset($data['items']) || !is_array($data['items'])) {
     exit;
 }
 
-// Aquí usamos solicitante en lugar de usuario_id
-$solicitante = "cliente1"; // o sacalo de sesión si lo tienes
+// solicitante
+$solicitante = "cliente1";
 
 try {
     $stmt = $conn->prepare("INSERT INTO solicitudes (solicitante, estado) VALUES (?, 'pendiente')");

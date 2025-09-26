@@ -1,4 +1,10 @@
 <?php
+/**
+ * Endpoint: /app/controllers/login.php
+ * Método: POST
+ * Descripción: Autentica usuario con email y contraseña.
+ * Respuesta: JSON, da éxito o error con token/sesión.
+ */
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
