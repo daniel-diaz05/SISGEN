@@ -9,6 +9,17 @@
 </head>
 <body>
 
+<!-- Verificación de usuario admin-->
+<script>
+  const rol = localStorage.getItem("rol");
+
+  if (rol !== "admin") {
+    alert("No eres administrador, por lo que no puedes entrar acá");
+    window.location.href = "compras.html";
+  }
+</script>
+
+
 <!-- Sidebar -->
 <div class="d-flex">
   <nav id="sidebarMenu" class="sidebar">

@@ -15,9 +15,17 @@ const handleSubmit = async (e) => {
     });
 
     const data = await response.json();
+    console.log("DATA RECIBIDA:", data);
+
 
     if (response.ok && data.success) {
       alert("Inicio de sesión exitoso 🚀");
+
+  // Guardar datos del usuario en localStorage
+  localStorage.setItem("email", data.email);
+  localStorage.setItem("nombre", data.nombre);
+  localStorage.setItem("rol", data.rol);
+
       // Redirigir a dashboard.html
       window.location.href = "http://localhost/sisgen/app/views/dashboard.html";
     } else {

@@ -1,12 +1,41 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // --- Funcionalidad para index.html ---
-    const loginBtn = document.getElementById('loginBtn');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', function (event) {
-            event.preventDefault();
-            window.location.href = 'dashboard.html';
+// LOGIN
+document.addEventListener("DOMContentLoaded", () => {
+  const formLogin = document.getElementById("formLogin");
+  if (formLogin) {
+    formLogin.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("../../app/controllers/login.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
         });
-    }
+
+        const data = await res.json();
+
+        if (data.success) {
+          // Guardar en localStorage
+          localStorage.setItem("email", data.email);
+          localStorage.setItem("nombre", data.nombre);
+          localStorage.setItem("rol", data.rol);
+
+          alert("Inicio de sesión exitoso 🚀");
+          window.location.href = "dashboard.html";
+        } else {
+          alert(data.error || "Credenciales incorrectas ❌");
+        }
+      } catch (err) {
+        console.error("Error en login:", err);
+        alert("No se pudo conectar con el servidor");
+      }
+    });
+  }
+});
+
 
   // --- Funcionalidad para inventario.html ---
   // aceptar ambos ids por compatibilidad con diferentes templates
@@ -141,39 +170,6 @@ document.addEventListener('DOMContentLoaded', function () {
       ]
     };
 
-    // Selecciona la tabla de usuarios de manera más específica
-    const tablaUsuarios = document.querySelector('table.table.table-bordered');
-    const modalHistorial = document.getElementById('historialModal');
-    if (tablaUsuarios && modalHistorial) {
-      tablaUsuarios.querySelectorAll('button[data-bs-toggle="modal"][data-bs-target="#historialModal"]').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-          // Mostrar modal manualmente por si falla data-bs-toggle
-          if (typeof bootstrap !== 'undefined') {
-            const modal = new bootstrap.Modal(modalHistorial);
-            modal.show();
-          }
-          // Cambiar el contenido del modal
-          const fila = btn.closest('tr');
-          if (!fila) return;
-          const nombre = fila.children[0].textContent.trim();
-          const historial = historialUsuarios[nombre];
-          // Cambiar título
-          modalHistorial.querySelector('.modal-title').textContent = `Historial de Compras - ${nombre}`;
-          // Cambiar cuerpo
-          let html = '';
-          if (historial && historial.length) {
-            html += `<table class="table table-striped text-center align-middle"><thead class="table-secondary"><tr><th>Producto</th><th>Unidades</th><th>Fecha</th><th>Valor Total</th></tr></thead><tbody>`;
-            historial.forEach(item => {
-              html += `<tr><td>${item.producto}</td><td>${item.unidades}</td><td>${item.fecha}</td><td>${item.valor}</td></tr>`;
-            });
-            html += '</tbody></table>';
-          } else {
-            html = '<p>No hay historial de compras para este usuario.</p>';
-          }
-          modalHistorial.querySelector('.modal-body').innerHTML = html;
-        });
-      });
-    }
 
     // funcionalidad CRUD
     document.querySelectorAll("#tabla-inventario tbody tr").forEach(fila => {
@@ -203,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       });
     });
-  }});
+  };
 
 // Esperar a que el DOM esté listo
 window.addEventListener('DOMContentLoaded', function() {
@@ -386,171 +382,6 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 })();
 
-// =======================
-// SOLICITUDES (HU3 multi-ítem + HU4 aprobar/rechazar)
-// =======================
-(function SolicitudesModule(){
-  // Ejecutar solo en pedidos.html
-  if (!/\/html\/pedidos\.html$/i.test(location.pathname)) return;
-
-  // Capturas ()
-  const tbSol   = document.getElementById('tbodySolicitudes');
-  const selProd = document.getElementById('solProducto');
-  const inpCant = document.getElementById('solCantidad');
-  const btnAdd  = document.getElementById('btnAgregarItem');
-  const btnSend = document.getElementById('btnEnviarSolicitud');
-  const inpSolic= document.getElementById('solSolicitante');
-  const inpMot  = document.getElementById('solMotivo');
-  const tbItems = document.getElementById('tbodyItemsSolicitud');
-  const tbDet   = document.getElementById('tbodySolDetalle');
-
-  const hasList = !!tbSol;
-  const hasForm = !!(selProd && inpCant && btnAdd && btnSend && inpSolic && tbItems);
-  console.log('[SISGEN] pedidos -> hasList:', hasList, 'hasForm:', hasForm);
-
-  const API = {
-    productos_listar   : '../../uploads/productos_listar.php',
-    solicitudes_listar : '../../uploads/solicitudes_listar.php',
-    solicitudes_crear  : '../../uploads/solicitudes_crear.php',
-    solicitudes_detalle: '../../uploads/solicitudes_detalle.php',
-    solicitudes_estado : '../../uploads/solicitudes_cambiar_estado.php'
-  };
-
-  let items = []; // {producto_id, nombre, cantidad}
-
-  async function poblarProductos(){
-    if (!hasForm) return;
-    const r = await fetch(API.productos_listar + '?ts=' + Date.now());
-    const txt = await r.text();
-    let data; try { data = JSON.parse(txt); } catch(e){ console.error('RAW productos:', txt); return; }
-    selProd.innerHTML = '<option value="">-- Producto --</option>';
-    data.forEach(p => {
-      selProd.insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.producto} (${p.codigo ?? ''})</option>`);
-    });
-  }
-
-  async function cargarSolicitudes(){
-    if (!hasList) return;
-    const r = await fetch(API.solicitudes_listar + '?ts=' + Date.now());
-    const txt = await r.text();
-    let data; try { data = JSON.parse(txt); } catch(e){ console.error('listar RAW:', txt); return; }
-    console.log('[SISGEN] solicitudes_listar -> filas:', Array.isArray(data) ? data.length : 'n/a');
-    tbSol.innerHTML = '';
-    (data||[]).forEach(s => {
-      tbSol.insertAdjacentHTML('beforeend', `
-        <tr data-id="${s.id}">
-          <td>${s.id}</td>
-          <td>${s.solicitante}</td>
-          <td>${s.motivo ?? ''}</td>
-          <td>${s.items ?? 0}</td>
-          <td>${s.total_unidades ?? 0}</td>
-          <td class="${
-            s.estado==='aprobada' ? 'text-success fw-bold' :
-            s.estado==='rechazada' ? 'text-danger fw-bold'  : 'text-warning fw-bold'
-          }">${s.estado}</td>
-          <td>${new Date(s.fecha).toLocaleString('es-CO')}</td>
-          <td>
-            <button class="btn btn-sm btn-info btn-ver">Ver</button>
-            ${s.estado==='pendiente' ? `
-              <button class="btn btn-sm btn-success btn-aprobar">Aprobar</button>
-              <button class="btn btn-sm btn-danger btn-rechazar">Rechazar</button>
-            ` : ''}
-          </td>
-        </tr>
-      `);
-    });
-  }
-
-  function renderItems(){
-    if (!hasForm) return;
-    tbItems.innerHTML = '';
-    items.forEach((it, idx)=>{
-      tbItems.insertAdjacentHTML('beforeend', `
-        <tr>
-          <td>${it.nombre}</td>
-          <td>${it.cantidad}</td>
-          <td><button class="btn btn-sm btn-outline-danger" data-del="${idx}">Quitar</button></td>
-        </tr>
-      `);
-    });
-  }
-
-  if (hasForm) {
-    btnAdd.addEventListener('click', ()=>{
-      const pid  = parseInt(selProd.value || '0', 10);
-      const ptxt = selProd.options[selProd.selectedIndex]?.text || '';
-      const cant = parseInt(inpCant.value || '0', 10);
-      if(!pid || cant<=0){ alert('Selecciona producto y cantidad'); return; }
-      const found = items.find(i=>i.producto_id===pid);
-      if(found) found.cantidad += cant;
-      else items.push({ producto_id: pid, nombre: ptxt, cantidad: cant });
-      renderItems();
-    });
-
-    tbItems.addEventListener('click', (e)=>{
-      const idx = e.target.getAttribute('data-del');
-      if(idx !== null){
-        items.splice(parseInt(idx,10),1);
-        renderItems();
-      }
-    });
-
-    btnSend.addEventListener('click', async ()=>{
-      if(!items.length){ alert('Añade al menos un producto'); return; }
-      if(!inpSolic.value.trim()){ alert('Ingresa el solicitante'); return; }
-      const fd = new FormData();
-      fd.append('solicitante', inpSolic.value.trim());
-      fd.append('motivo',      inpMot.value.trim());
-      fd.append('items_json',  JSON.stringify(items));
-      const r = await fetch(API.solicitudes_crear, { method:'POST', body: fd });
-      const resp = await r.json();
-      if(resp.ok){
-        items = []; renderItems();
-        inpSolic.value=''; inpMot.value=''; selProd.value=''; inpCant.value='1';
-        await cargarSolicitudes();
-        alert('Solicitud creada');
-      }else{
-        alert(resp.error || 'Error al crear solicitud');
-      }
-    });
-  }
-
-  // Delegación para Ver/Aprobar/Rechazar (solo si hay tabla)
-  if (hasList) {
-    document.addEventListener('click', async (e)=>{
-      const row = e.target.closest('tr[data-id]'); if(!row) return;
-      const id = row.getAttribute('data-id');
-
-      if (e.target.classList.contains('btn-ver')) {
-        const url = API.solicitudes_detalle + '?id=' + id + '&ts=' + Date.now();
-        const r   = await fetch(url);
-        const txt = await r.text();
-        let data; try { data = JSON.parse(txt); }
-        catch { console.error('Detalle no-JSON:', txt); alert('Respuesta inválida del servidor.'); return; }
-        if (data && data.ok === false) { alert('No se pudo cargar el detalle: ' + (data.error || 'Error')); return; }
-        if (!Array.isArray(data)) { alert('No hay detalle para esta solicitud.'); return; }
-        const tbDet = document.getElementById('tbodySolDetalle');
-        if (!tbDet) return;
-        tbDet.innerHTML = '';
-        data.forEach(d => tbDet.insertAdjacentHTML('beforeend', `<tr><td>${d.producto}</td><td>${d.cantidad}</td></tr>`));
-        if (typeof bootstrap !== 'undefined') new bootstrap.Modal(document.getElementById('modalSolDetalle')).show();
-      }
-
-      if (e.target.classList.contains('btn-aprobar') || e.target.classList.contains('btn-rechazar')) {
-        const accion = e.target.classList.contains('btn-aprobar') ? 'aprobar' : 'rechazar';
-        const fd = new FormData(); fd.append('id', id); fd.append('accion', accion);
-        const r = await fetch(API.solicitudes_estado, { method:'POST', body: fd });
-        const resp = await r.json();
-        if(resp.ok){ await cargarSolicitudes(); alert(`Solicitud ${accion}da`); }
-        else { alert(resp.error || 'No se pudo cambiar el estado'); }
-      }
-    });
-  }
-
-  // Arranque local (sin exportar nada al global)
-  (async ()=>{ await poblarProductos(); await cargarSolicitudes(); })();
-})();
-
 // ================== CARRITO ==================
 let carrito = [];
 
@@ -599,21 +430,36 @@ async function confirmarCompra() {
     return;
   }
 
-  let data = { items: carrito };
+  // datos a enviar
+  let data = {
+    items: carrito,
+    solicitante: localStorage.getItem("email") // usuario logueado
+  };
 
-  let res = await fetch("../../uploads/solicitudes_crear.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+  try {
+    let res = await fetch("../../uploads/solicitudes_crear.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
 
-  let json = await res.json();
-  alert(json.msg || "Solicitud creada");
+    let json = await res.json();
 
-  carrito = [];
-  renderCarrito();
-  if (typeof cargarInventario === "function") {
-    cargarInventario(); // refrescar inventario si ya tienes esta función
+    if (json.ok) {
+      alert(json.msg || "Solicitud creada con éxito");
+      carrito = [];
+      renderCarrito();
+
+      // refrescar inventario
+      if (typeof cargarInventario === "function") {
+        cargarInventario();
+      }
+    } else {
+      alert(json.msg || "Error al crear solicitud");
+    }
+  } catch (err) {
+    console.error("Error al confirmar compra:", err);
+    alert("Error al enviar la solicitud");
   }
 }
 
@@ -654,6 +500,8 @@ async function cargarCompras() {
           <td>${s.estado}</td>
           <td>
             <button class="btn btn-info btn-sm" onclick="verDetalle(${s.id})">Ver detalle</button>
+            <button class="btn btn-success btn-sm aprobar-btn admin-only" data-id="${s.id}">Aprobar</button>
+            <button class="btn btn-danger btn-sm denegar-btn admin-only" data-id="${s.id}">Denegar</button>
           </td>
         </tr>`;
     });
@@ -686,3 +534,68 @@ async function verDetalle(id) {
   let modal = new bootstrap.Modal(document.getElementById("detalleModal"));
   modal.show();
 }
+
+document.addEventListener("click", async e => {
+  if (e.target.classList.contains("aprobar-btn") || e.target.classList.contains("denegar-btn")) {
+    const id = e.target.dataset.id;
+    const accion = e.target.classList.contains("aprobar-btn") ? "aprobar" : "rechazar";
+
+    try {
+      let res = await fetch("../../uploads/solicitudes_cambiar_estado.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, accion })
+      });
+      let data = await res.json();
+
+      if (data.ok) {
+        alert(data.msg);
+        cargarCompras();
+      } else {
+        alert("Error: " + (data.msg || data.error));
+      }
+    } catch (err) {
+      console.error("Error al cambiar estado:", err);
+    }
+  }
+});
+
+// usuarios html
+
+async function cargarUsuarios() {
+  try {
+    let res = await fetch("../../uploads/usuarios_listar.php");
+    let usuarios = await res.json();
+    console.log(usuarios);
+
+    let tbody = document.getElementById("tablaUsuarios");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+    usuarios.forEach(u => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.nombre}</td>
+          <td>${u.email}</td>
+          <td>${u.rol}</td>
+        </tr>
+      `;
+    });
+  } catch (err) {
+    console.error("Error cargando usuarios:", err);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+  if (document.getElementById("tablaUsuarios")) {
+    cargarUsuarios();
+  }
+});
+
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.getElementById("tablaUsuarios")) {
+    cargarUsuarios();
+  }
+});

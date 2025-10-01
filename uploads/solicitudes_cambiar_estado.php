@@ -26,10 +26,15 @@ if (!in_array($accion, ["aprobar","rechazar"])) {
 }
 
 // Cambiar estado solicitud
-$estado = $accion === "aprobar" ? "aprobado" : "rechazado";
+$estado = $accion === "aprobar" ? "aprobada" : "rechazada";
 $stmt = $conn->prepare("UPDATE solicitudes SET estado=? WHERE id=?");
 $stmt->bind_param("si", $estado, $id);
 $stmt->execute();
+
+if ($stmt->affected_rows < 1) {
+    echo json_encode(["ok"=>false,"msg"=>"No se actualizó ninguna fila. Verifica el id."]);
+    exit;
+}
 
 if ($accion === "aprobar") {
     // Traer items de solicitud
@@ -38,16 +43,20 @@ if ($accion === "aprobar") {
         $producto_id = $item['producto_id'];
         $cantidad    = $item['cantidad'];
 
-        // Insertar movimiento entrada
-        $stmt2 = $conn->prepare("INSERT INTO movimientos (producto_id, tipo, cantidad, motivo) VALUES (?, 'entrada', ?, 'compra aprobada')");
+        // Insertar movimiento salida
+        $stmt2 = $conn->prepare("INSERT INTO movimientos (producto_id, tipo, cantidad, motivo) VALUES (?, 'salida', ?, 'compra aprobada')");
         $stmt2->bind_param("ii", $producto_id, $cantidad);
         $stmt2->execute();
 
         // Actualizar stock en productos
-        $stmt3 = $conn->prepare("UPDATE productos SET stock = stock + ? WHERE id=?");
+        $stmt3 = $conn->prepare("UPDATE productos SET stock = stock - ? WHERE id=?");
         $stmt3->bind_param("ii", $cantidad, $producto_id);
         $stmt3->execute();
     }
+
+        // Actualizar la fecha de última actualización del inventario
+        $conn->query("UPDATE inventario_meta SET ultima_actualizacion = NOW() WHERE id = 1");
+
 }
 
 echo json_encode(["ok"=>true,"msg"=>"Solicitud $estado correctamente"]);

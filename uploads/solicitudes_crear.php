@@ -19,7 +19,7 @@ if (!$data || !isset($data['items']) || !is_array($data['items'])) {
 }
 
 // solicitante
-$solicitante = "cliente1";
+$solicitante = $data['solicitante'] ?? 'desconocido';
 
 try {
     $stmt = $conn->prepare("INSERT INTO solicitudes (solicitante, estado) VALUES (?, 'pendiente')");

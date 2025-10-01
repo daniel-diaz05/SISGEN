@@ -9,6 +9,17 @@
 </head>
 <body class="bg-light p-4">
 
+<!-- Verificación de usuario admin-->
+<script>
+  const rol = localStorage.getItem("rol");
+
+  if (rol !== "admin") {
+    alert("No eres administrador, por lo que no puedes entrar acá");
+    window.location.href = "usuarios.html";
+  }
+</script>
+
+
 <!-- Sidebar -->
 
 <div class="d-flex">
@@ -32,11 +43,7 @@
           <i class="bi bi-people me-2"></i><span>Usuarios</span>
         </a>
         
-        <a href="proveedores.html" class="list-group-item list-group-item-action py-2 ripple">
-          <i class="bi bi-truck me-2"></i><span>Proveedores</span>
-        </a>
-        
-        <a href="logout.html" class="list-group-item list-group-item-action py-2 ripple">
+        <a href="index.html" class="list-group-item list-group-item-action py-2 ripple">
           <i class="bi bi-box-arrow-right me-2"></i><span>Salir</span>
         </a>
       </div>
@@ -59,116 +66,16 @@
     <table class="table table-bordered text-center align-middle">
       <thead class="table-dark">
         <tr>
+          <th>ID</th>
           <th>Nombre</th>
-          <th>Correo</th>
+          <th>Email</th>
           <th>Rol</th>
-          <th>Estado</th>
-          <th>Historial</th>
-          <th>Acciones</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <td>Juan Pérez</td>
-          <td>juanperez@email.com</td>
-          <td>Administrador</td>
-          <td><span class="badge bg-success">Activo</span></td>
-          <td><button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#historialModalJuan">Ver</button></td>
-          <td>
-            <button class="btn btn-sm btn-warning">Editar</button>
-            <button class="btn btn-sm btn-danger">Bloquear</button>
-          </td>
-        </tr>
-        <tr>
-          <td>Ana Torres</td>
-          <td>ana@email.com</td>
-          <td>Cliente</td>
-          <td><span class="badge bg-secondary">Bloqueado</span></td>
-          <td><button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#historialModalAna">Ver</button></td>
-          <td>
-            <button class="btn btn-sm btn-warning">Editar</button>
-            <button class="btn btn-sm btn-success">Desbloquear</button>
-          </td>
-        </tr>
-      </tbody>
+      <tbody id="tablaUsuarios">
+        <!-- Filas de usuarios se llenan dinámicamente -->
     </table>
   </div>
-
-<!-- Modal Historial de Compras Juan Pérez -->
-<div class="modal fade" id="historialModalJuan" tabindex="-1" aria-labelledby="historialModalJuanLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="historialModalJuanLabel">Historial de Compras - Juan Pérez</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-striped text-center align-middle">
-          <thead class="table-secondary">
-            <tr>
-              <th>Producto</th>
-              <th>Unidades</th>
-              <th>Fecha</th>
-              <th>Valor Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Taladro 12V</td>
-              <td>2</td>
-              <td>2025-06-01</td>
-              <td>$360.000</td>
-            </tr>
-            <tr>
-              <td>Cinta Métrica</td>
-              <td>1</td>
-              <td>2025-06-02</td>
-              <td>$10.000</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Historial de Compras Ana Torres -->
-<div class="modal fade" id="historialModalAna" tabindex="-1" aria-labelledby="historialModalAnaLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="historialModalAnaLabel">Historial de Compras - Ana Torres</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-striped text-center align-middle">
-          <thead class="table-secondary">
-            <tr>
-              <th>Producto</th>
-              <th>Unidades</th>
-              <th>Fecha</th>
-              <th>Valor Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Martillo</td>
-              <td>1</td>
-              <td>2025-06-03</td>
-              <td>$25.000</td>
-            </tr>
-            <tr>
-              <td>Tornillos</td>
-              <td>10</td>
-              <td>2025-06-04</td>
-              <td>$5.000</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../public/js/main.js"></script>
