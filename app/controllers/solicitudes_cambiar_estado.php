@@ -6,7 +6,9 @@
  * Entrada: JSON { id, accion:"aprobar"o"rechazar" }
  * Respuesta: JSON: éxito o error.
  */
-require_once __DIR__ . '/../config/conexion.php';
+
+require_once __DIR__ . '/../middleware/validar_sesion.php';
+require_once __DIR__ . '/../../config/conexion.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 $id     = $data['id'] ?? 0;
@@ -42,6 +44,32 @@ if ($accion === "aprobar") {
     while ($item = $items->fetch_assoc()) {
         $producto_id = $item['producto_id'];
         $cantidad    = $item['cantidad'];
+
+        // Validar stock disponible antes de aprobar
+        $stmtCheck = $conn->prepare("SELECT stock FROM productos WHERE id = ?");
+        $stmtCheck->bind_param("i", $producto_id);
+        $stmtCheck->execute();
+        $stmtCheck->bind_result($stock_actual);
+        $stmtCheck->fetch();
+        $stmtCheck->close();
+
+        if ($stock_actual === null) {
+            http_response_code(400);
+            echo json_encode([
+                "ok"  => false,
+                "msg" => "Producto ID $producto_id no existe"
+            ]);
+            exit;
+        }
+
+        if ($cantidad > $stock_actual) {
+            http_response_code(400);
+            echo json_encode([
+                "ok"  => false,
+                "msg" => "Stock insuficiente para el producto ID $producto_id"
+            ]);
+            exit;
+        }
 
         // Insertar movimiento salida
         $stmt2 = $conn->prepare("INSERT INTO movimientos (producto_id, tipo, cantidad, motivo) VALUES (?, 'salida', ?, 'compra aprobada')");

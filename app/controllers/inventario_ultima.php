@@ -6,7 +6,10 @@
  * Respuesta: JSON: datos del inventario más reciente
  */
 header('Content-Type: application/json; charset=utf-8');
-require __DIR__ . "/../config/conexion.php";
+
+require_once __DIR__ . "/../middleware/validar_sesion.php";
+require_once __DIR__ . "/../../config/conexion.php";
+
 $conn->set_charset('utf8mb4');
 
 $ts = null;

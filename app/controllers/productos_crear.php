@@ -6,7 +6,10 @@
  * Entrada: form-data (producto, stock, código, etc.)
  * Respuesta: JSON: éxito o error.
  */
-require '../config/conexion.php';
+
+require_once __DIR__ . "/../middleware/validar_sesion.php";
+require_once __DIR__ . "/../../config/conexion.php";
+
 $req=['producto','stock','codigo'];
 foreach($req as $k){ if(empty($_POST[$k])){ http_response_code(400); echo "Falta $k"; exit; } }
 

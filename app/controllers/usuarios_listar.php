@@ -5,7 +5,10 @@
  * Descripción: Lista todos los usuarios del sistema.
  * Respuesta: JSON: [ { id, nombre, email, rol } ]
  */
-require_once __DIR__ . '/../config/conexion.php';
+
+require_once __DIR__ . "/../middleware/validar_sesion.php";
+require_once __DIR__ . "/../../config/conexion.php";
+
 header("Content-Type: application/json; charset=utf-8");
 
 error_reporting(E_ALL);

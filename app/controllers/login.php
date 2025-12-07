@@ -11,6 +11,8 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=utf-8");
 
+session_start();
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -20,7 +22,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
 
-$conexion = new mysqli("localhost", "root", "", "sisgen");
+$config = include __DIR__ . '/../../../sisgen_config.php';
+
+$conexion = new mysqli(
+    $config['DB_HOST'],
+    $config['DB_USER'],
+    $config['DB_PASS'],
+    $config['DB_NAME']
+);
+
 if ($conexion->connect_error) {
     http_response_code(500);
     echo json_encode(["success" => false, "error" => "Error de conexión"]);
@@ -42,6 +52,11 @@ if ($result->num_rows > 0) {
     $user = $result->fetch_assoc();
 
     if (password_verify($password, $user["password"])) {
+        // guardar sesión de usuario
+        $_SESSION["usuario_id"]     = $user["id"];
+        $_SESSION["usuario_nombre"] = $user["nombre"];
+        $_SESSION["usuario_email"]  = $user["email"];
+        $_SESSION["usuario_rol"]    = $user["rol"];
         echo json_encode([
             "success" => true,
             "id" => $user["id"],

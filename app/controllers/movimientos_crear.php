@@ -7,7 +7,9 @@
  * Respuesta: JSON: éxito o error.
  */
 header('Content-Type: application/json; charset=utf-8');
-require __DIR__ . "/../config/conexion.php";
+
+require_once __DIR__ . "/../middleware/validar_sesion.php";
+require_once __DIR__ . "/../../config/conexion.php";
 
 try {
   // Validación mínima

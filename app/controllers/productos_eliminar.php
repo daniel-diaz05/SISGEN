@@ -6,7 +6,10 @@
  * Entrada: form-data (id)
  * Respuesta: JSON: éxito o error.
  */
-require '../config/conexion.php';
+
+require_once __DIR__ . "/../middleware/validar_sesion.php";
+require_once __DIR__ . "/../../config/conexion.php";
+
 if(empty($_POST['id'])){ http_response_code(400); echo "Falta id"; exit; }
 $id=(int)$_POST['id'];
 

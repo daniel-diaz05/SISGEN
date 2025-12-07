@@ -37,73 +37,113 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-  // --- Funcionalidad para inventario.html ---
-  // aceptar ambos ids por compatibilidad con diferentes templates
-  const inventarioPage = document.getElementById('tablaInventario') || document.getElementById('tabla-inventario');
-  if (inventarioPage) {
-        // Alerta control de stock
-    const aplicarAlertaStock = () => {
-      document.querySelectorAll("#tablaInventario tbody tr").forEach((fila) => {
-                const stockTd = fila.children[3];
-                if (stockTd) {
-                    const stock = parseInt(stockTd.textContent);
-                    stockTd.classList.remove("stock-bajo", "stock-alto", "stock-normal");
-                    if (!isNaN(stock)) {
-                        if (stock < 50) {
-                            stockTd.classList.add("stock-bajo");
-                        } else if (stock > 4000) {
-                            stockTd.classList.add("stock-alto");
-                        } else {
-                            stockTd.classList.add("stock-normal");
-                        }
-                    }
-                }
-            });
-        };
-        aplicarAlertaStock();
-
-    // --- Funcionalidad para dashboard.html ---
-    const graficoProductos = document.getElementById('graficoProductos');
-    if (graficoProductos) {
-        try {
-            new Chart(graficoProductos.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: ['Tornillos', 'Martillos', 'Taladros', 'Brocas', 'Cintas Métricas', 'Llaves Ajustables'],
-                    datasets: [{
-                        label: '# de Unidades Vendidas',
-                        data: [120, 80, 65, 50, 45, 30],
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.2)',
-                            'rgba(54, 162, 235, 0.2)',
-                            'rgba(255, 206, 86, 0.2)',
-                            'rgba(75, 192, 192, 0.2)',
-                            'rgba(153, 102, 255, 0.2)',
-                            'rgba(255, 159, 64, 0.2)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 206, 86, 1)',
-                            'rgba(75, 192, 192, 1)',
-                            'rgba(153, 102, 255, 1)',
-                            'rgba(255, 159, 64, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        } catch(e) {
-            console.error("Chart.js error:", e);
+ // --- Funcionalidad para inventario.html ---
+const inventarioPage = document.getElementById('tablaInventario') || document.getElementById('tabla-inventario');
+if (inventarioPage) {
+  // Alerta control de stock SOLO para inventario
+  const aplicarAlertaStock = () => {
+    document.querySelectorAll("#tablaInventario tbody tr").forEach((fila) => {
+      const stockTd = fila.children[3];
+      if (stockTd) {
+        const stock = parseInt(stockTd.textContent);
+        stockTd.classList.remove("stock-bajo", "stock-alto", "stock-normal");
+        if (!isNaN(stock)) {
+          if (stock < 50) {
+            stockTd.classList.add("stock-bajo");
+          } else if (stock > 4000) {
+            stockTd.classList.add("stock-alto");
+          } else {
+            stockTd.classList.add("stock-normal");
+          }
         }
+      }
+    });
+  };
+  aplicarAlertaStock();
+
+  // AQUÍ TERMINA LO EXCLUSIVO DE INVENTARIO
+}
+// <-- AQUÍ ya estamos fuera del if(inventarioPage)
+
+// --- Funcionalidad para dashboard.html ---
+async function cargarDashboard() {
+  try {
+    const res = await fetch("../../app/controllers/dashboard_datos.php");
+    const txt = await res.text();
+    console.log("Dashboard datos:", res.status, txt);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} - ${txt}`);
     }
+
+    const data = JSON.parse(txt);
+    if (!data.ok) {
+      throw new Error(data.msg || "Error en dashboard");
+    }
+
+    // ----- Tarjetas -----
+    if (data.resumen) {
+      const tp = document.getElementById("totalProductos");
+      if (tp) tp.textContent = data.resumen.total_productos;
+
+      const ts = document.getElementById("totalStock");
+      if (ts) ts.textContent = data.resumen.total_stock;
+
+      const mh = document.getElementById("movimientosHoy");
+      if (mh) mh.textContent = data.resumen.movimientos_hoy;
+    }
+
+    // ----- Historial de compras -----
+    const tbody = document.getElementById("tbodyHistorialCompras");
+    if (tbody && Array.isArray(data.historial_compras)) {
+      tbody.innerHTML = "";
+      data.historial_compras.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.producto}</td>
+          <td>${row.unidades}</td>
+          <td>${row.fecha}</td>
+          <td>$${row.valor_total}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ----- Gráfico productos más vendidos -----
+    const canvas = document.getElementById("graficoProductos");
+    if (canvas && typeof Chart !== "undefined") {
+      const ctx = canvas.getContext("2d");
+      const top = Array.isArray(data.top_productos) ? data.top_productos : [];
+      const labels = top.map(r => r.producto);
+      const valores = top.map(r => r.total_vendido);
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "# de unidades vendidas",
+              data: valores
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+  } catch (e) {
+    console.error("Error cargando dashboard:", e);
+    alert("Error cargando dashboard: " + e.message);
+  }
+}
 
     // --- Funcionalidad para pedidos.html ---
     const detallesPedidos = {
@@ -159,16 +199,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Funcionalidad para usuarios.html ---
-    const historialUsuarios = {
-      'Juan Pérez': [
-        { producto: 'Taladro 12V', unidades: 2, fecha: '2025-06-01', valor: '$360.000' },
-        { producto: 'Cinta Métrica', unidades: 1, fecha: '2025-06-02', valor: '$10.000' }
-      ],
-      'Ana Torres': [
-        { producto: 'Martillo', unidades: 1, fecha: '2025-06-03', valor: '$25.000' },
-        { producto: 'Tornillos', unidades: 10, fecha: '2025-06-04', valor: '$5.000' }
-      ]
-    };
+    
+ async function cargarUsuarios() {
+  try {
+    let res = await fetch("../../app/controllers/usuarios_listar.php");
+    let usuarios = await res.json();
+    console.log(usuarios);
+
+    let tbody = document.getElementById("tablaUsuarios");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+    usuarios.forEach(u => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.nombre}</td>
+          <td>${u.email}</td>
+          <td>${u.rol}</td>
+        </tr>
+      `;
+    });
+  } catch (err) {
+    console.error("Error cargando usuarios:", err);
+  }
+}
+
 
 
     // funcionalidad CRUD
@@ -199,7 +255,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
     });
-  };
 
 // Esperar a que el DOM esté listo
 window.addEventListener('DOMContentLoaded', function() {
@@ -244,10 +299,10 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 
   const API = {
-    listar    : '../../uploads/productos_listar.php',
-    crear     : '../../uploads/productos_crear.php',
-    actualizar: '../../uploads/productos_actualizar.php',
-    eliminar  : '../../uploads/productos_eliminar.php'
+    listar    : '../../app/controllers/productos_listar.php',
+    crear     : '../../app/controllers/productos_crear.php',
+    actualizar: '../../app/controllers/productos_actualizar.php',
+    eliminar  : '../../app/controllers/productos_eliminar.php'
   };
 
   const moneda = v => '$' + Number(v||0).toLocaleString('es-CO');
@@ -281,19 +336,60 @@ window.addEventListener('DOMContentLoaded', function() {
     reinitDataTable();
   }
 
-  async function cargar(){
-    const r = await fetch(API.listar);
-    const txt = await r.text();
-    try {
-      const data = JSON.parse(txt);
-      if (data.error) throw new Error(data.error);
-      pintar(data);
-      await cargarUltima();
-    } catch(e) {
-      console.error('API listar error:', txt);
-      alert('Error cargando inventario: '+e.message);
+async function cargar() {
+  const r = await fetch(API.listar);
+  const txt = await r.text();
+
+  try {
+    const data = JSON.parse(txt);
+    console.log('Respuesta inventario:', data); // depuración
+
+    let rows = null;
+
+    // 1) Formato antiguo array
+    if (Array.isArray(data)) {
+      rows = data;
     }
+
+    // 2) Formato tipo wrapper
+    else if (data && typeof data === 'object') {
+
+      if (Array.isArray(data.data)) {
+        rows = data.data;
+      } else if (Array.isArray(data.rows)) {
+        rows = data.rows;
+      } else if (Array.isArray(data.inventario)) {
+        rows = data.inventario;
+      } else {
+        // Buscar cualquier propiedad array
+        const keys = Object.keys(data);
+        const keyArray = keys.find(k => Array.isArray(data[k]));
+        if (keyArray) {
+          rows = data[keyArray];
+        }
+      }
+
+      // Si sale error de backend
+      if (data.ok === false || data.error) {
+        throw new Error(data.msg || data.error || 'Error en API');
+      }
+    }
+
+    if (!Array.isArray(rows)) {
+      console.error('Estructura inesperada de respuesta:', data);
+      throw new Error('Respuesta inválida del servidor');
+    }
+
+    pintar(rows);
+    await cargarUltima();
+
+  } catch (e) {
+    console.error('API listar error:', txt);
+    alert('Error cargando inventario: ' + e.message);
   }
+}
+
+
 
   // Escucha del formulario (ahora sí dentro del mismo bloque)
   form.addEventListener('submit', async (e)=>{
@@ -368,7 +464,7 @@ window.addEventListener('DOMContentLoaded', function() {
   cargar();
 
   async function cargarUltima(){
-    const r = await fetch('../../uploads/inventario_ultima.php?ts=' + Date.now());
+    const r = await fetch('../../app/controllers/inventario_ultima.php?ts=' + Date.now());
     const txt = await r.text();
     try {
       const data = JSON.parse(txt);
@@ -430,38 +526,50 @@ async function confirmarCompra() {
     return;
   }
 
-  // datos a enviar
-  let data = {
-    items: carrito,
-    solicitante: localStorage.getItem("email") // usuario logueado
+  const data = {
+    items: carrito
   };
 
   try {
-    let res = await fetch("../../uploads/solicitudes_crear.php", {
+    const res = await fetch("../../app/controllers/solicitudes_crear.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     });
 
-    let json = await res.json();
+    const txt = await res.text();
+    console.log("Respuesta solicitudes_crear.php:", res.status, txt);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} - ${txt}`);
+    }
+
+    let json;
+    try {
+      json = JSON.parse(txt);
+    } catch (e) {
+      throw new Error("Respuesta no es JSON válido: " + txt);
+    }
 
     if (json.ok) {
       alert(json.msg || "Solicitud creada con éxito");
       carrito = [];
       renderCarrito();
 
-      // refrescar inventario
       if (typeof cargarInventario === "function") {
         cargarInventario();
       }
     } else {
-      alert(json.msg || "Error al crear solicitud");
+      throw new Error(json.msg || "Error al crear solicitud");
     }
+
   } catch (err) {
     console.error("Error al confirmar compra:", err);
-    alert("Error al enviar la solicitud");
+    alert("Error al enviar la solicitud: " + err.message);
   }
 }
+
+
 
 // Delegar eventos
 document.addEventListener("DOMContentLoaded", function() {
@@ -475,7 +583,7 @@ document.addEventListener("DOMContentLoaded", function() {
 async function cargarCompras() {
   console.log(" Ejecutando cargarCompras()");
   try {
-    let res = await fetch("../../uploads/solicitudes_listar.php");
+    let res = await fetch("../../app/controllers/solicitudes_listar.php");
     console.log(" URL usada:", res.url);
     console.log(" Status:", res.status);
 
@@ -517,7 +625,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function verDetalle(id) {
-  let res = await fetch("../../uploads/solicitudes_detalle.php?id=" + id);
+  let res = await fetch("../../app/controllers/solicitudes_detalle.php?id=" + id);
   let items = await res.json();
 
   let tbody = document.getElementById("detalleSolicitud");
@@ -541,7 +649,7 @@ document.addEventListener("click", async e => {
     const accion = e.target.classList.contains("aprobar-btn") ? "aprobar" : "rechazar";
 
     try {
-      let res = await fetch("../../uploads/solicitudes_cambiar_estado.php", {
+      let res = await fetch("../../app/controllers/solicitudes_cambiar_estado.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, accion })
@@ -560,42 +668,3 @@ document.addEventListener("click", async e => {
   }
 });
 
-// usuarios html
-
-async function cargarUsuarios() {
-  try {
-    let res = await fetch("../../uploads/usuarios_listar.php");
-    let usuarios = await res.json();
-    console.log(usuarios);
-
-    let tbody = document.getElementById("tablaUsuarios");
-    if (!tbody) return;
-
-    tbody.innerHTML = "";
-    usuarios.forEach(u => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${u.id}</td>
-          <td>${u.nombre}</td>
-          <td>${u.email}</td>
-          <td>${u.rol}</td>
-        </tr>
-      `;
-    });
-  } catch (err) {
-    console.error("Error cargando usuarios:", err);
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("tablaUsuarios")) {
-    cargarUsuarios();
-  }
-});
-
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("tablaUsuarios")) {
-    cargarUsuarios();
-  }
-});

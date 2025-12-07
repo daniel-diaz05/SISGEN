@@ -7,7 +7,9 @@
  * Respuesta: JSON: detalle de la solicitud.
  */
 header('Content-Type: application/json; charset=utf-8');
-require __DIR__ . '/../config/conexion.php';
+
+require_once __DIR__ . '/../middleware/validar_sesion.php';
+require __DIR__ . '/../../config/conexion.php';
 
 $id = $_GET['id'] ?? 0;
 $id = (int)$id;

@@ -5,7 +5,9 @@
  * Descripción: Lista todas las solicitudes de productos.
  * Respuesta: JSON: { id, usuario, estado, ... }
  */
-require_once __DIR__ . '/../config/conexion.php';
+
+require_once __DIR__ . '/../middleware/validar_sesion.php';
+require_once __DIR__ . '/../../config/conexion.php';
 header("Content-Type: application/json");
 error_reporting(0);
 

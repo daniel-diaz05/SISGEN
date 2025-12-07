@@ -9,8 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+require_once __DIR__ . '/../middleware/validar_sesion.php';
 require_once __DIR__ . '/../config/conexion.php';
-require_once __DIR__ . '/../models/Producto.php';
 
 $producto = new Producto($conn);
 $method = $_SERVER['REQUEST_METHOD'];

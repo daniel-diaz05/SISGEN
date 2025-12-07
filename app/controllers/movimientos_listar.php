@@ -6,7 +6,9 @@
  * Respuesta: JSON: { id, producto_id, tipo, cantidad, ... }
  */
 header('Content-Type: application/json; charset=utf-8');
-require __DIR__ . '/../config/conexion.php';
+
+require_once __DIR__ . "/../middleware/validar_sesion.php";
+require_once __DIR__ . "/../../config/conexion.php";
 
 $sql = "SELECT m.id, m.producto_id, p.producto, m.tipo, m.cantidad, m.motivo,
                m.usuario, m.rol, m.documento, m.fecha
